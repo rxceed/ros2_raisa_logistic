@@ -8,16 +8,23 @@ import numpy as np
 from dual_leg.secret import post_nav_url, get_pose_url
 
 left_angle = 0
+right_angle = 0
 
 class subscriber(Node):
     def __init__(self):
         super().__init__("dual_leg_subscriber")
-        self.sub = self.create_subscription(Float64, "dual_leg_l", self.callback, 10)
-        self.sub
-    def callback(self, msg):
+        self.sub_l = self.create_subscription(Float64, "dual_leg_l", self.callback_l, 10)
+        self.sub_r = self.create_subscription(Float64, "dual_leg_r", self.callback_r, 10)
+        self.sub_l
+        self.sub_r
+    def callback_l(self, msg):
         global left_angle
-        self.get_logger().info(f"Heard: {msg.data}")
+        self.get_logger().info(f"Heard L: {msg.data}")
         left_angle = msg.data
+    def callback_r(self, msg):
+        global right_angle
+        self.get_logger().info(f"Heard R: {msg.data}")
+        right_angle = msg.data
 
 def post_nav(nav_payload):
     res = requests.post(post_nav_url, json=nav_payload, headers={'Content-Type': 'application/json'})
