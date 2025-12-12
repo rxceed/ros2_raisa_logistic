@@ -25,7 +25,8 @@ setup(
     entry_points={
         'console_scripts': [
             'talker = dual_leg.dual_leg_pub:main',
-            'listener = dual_leg.dual_leg_sub:main'
+            'listener = dual_leg.dual_leg_sub:main',
+            'logger = dual_leg.dual_leg_logger:main'
         ],
     },
 )
