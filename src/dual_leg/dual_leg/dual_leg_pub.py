@@ -33,46 +33,6 @@ left_packet_count = 0
 right_packet_count = 0
 start_time = time.time()
 
-def send_command_to_leg(leg_name, command, address, sock):
-    """Send command to specific leg via UDP"""
-    if address and sock:
-        try:
-            sock.sendto(command.encode(), address)
-            print(f"\n>>> Command '{command}' sent to {leg_name} at {address[0]}")
-        except Exception as e:
-            print(f"\n>>> Error sending command to {leg_name}: {e}")
-    else:
-        print(f"\n>>> {leg_name} not connected yet. Waiting for data...")
-
-def command_input_thread():
-    """Thread to handle user input for commands"""
-    print("\nCommands available:")
-    print("  Z or z - Zero both sensors")
-    print("  L - Zero LEFT leg only")
-    print("  R - Zero RIGHT leg only")
-    print("  X - Reset both zero offsets")
-    print("\nType command and press Enter:\n")
-    
-    while True:
-        try:
-            cmd = input().strip().upper()
-            if cmd == 'Z':
-                send_command_to_leg("LEFT LEG", "Z", left_leg_address, left_command_socket)
-                send_command_to_leg("RIGHT LEG", "Z", right_leg_address, right_command_socket)
-            elif cmd == 'L':
-                send_command_to_leg("LEFT LEG", "Z", left_leg_address, left_command_socket)
-            elif cmd == 'R':
-                send_command_to_leg("RIGHT LEG", "Z", right_leg_address, right_command_socket)
-            elif cmd == 'X':
-                send_command_to_leg("LEFT LEG", "R", left_leg_address, left_command_socket)
-                send_command_to_leg("RIGHT LEG", "R", right_leg_address, right_command_socket)
-            elif cmd:
-                print(f">>> Invalid command: {cmd}")
-        except EOFError:
-            break
-        except KeyboardInterrupt:
-            break
-
 # Shared data for display
 left_angle = 0.0
 right_angle = 0.0
@@ -203,11 +163,6 @@ def main(args=None):
     left_thread.start()
     right_thread.start()
     display.start()
-    
-    # Start command input thread
-    time.sleep(1)  # Give time for receiver threads to start
-    input_thread = threading.Thread(target=command_input_thread, daemon=True)
-    input_thread.start()
 
     rclpy.init(args=args)
     dual_leg_pub = publisher()
