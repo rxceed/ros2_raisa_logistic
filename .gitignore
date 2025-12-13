@@ -1,4 +1,6 @@
+.vscode
 build
 install
 log
 secret.py
+secret.hpp
