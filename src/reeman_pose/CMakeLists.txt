@@ -13,6 +13,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(custom_interface REQUIRED)
 find_package(reeman_api_interface REQUIRED)
 find_package(CURL REQUIRED)
+find_package(nlohmann_json REQUIRED)
 
 include_directories(${PROJECT_NAME}/include/${PROJECT_NAME})
 # uncomment the following section in order to fill in
@@ -25,6 +26,10 @@ add_executable(pozyx_reeman_pub src/pozyx_reeman_pub.cpp)
 ament_target_dependencies(reeman_pose_pub rclcpp std_msgs geometry_msgs reeman_api_interface)
 ament_target_dependencies(pozyx_to_reeman_pose_server rclcpp custom_interface)
 ament_target_dependencies(pozyx_reeman_pub rclcpp std_msgs geometry_msgs custom_interface reeman_api_interface)
+target_link_libraries(
+  reeman_pose_pub
+  nlohmann_json::nlohmann_json
+)
 
 target_include_directories(pozyx_to_reeman_pose_server PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

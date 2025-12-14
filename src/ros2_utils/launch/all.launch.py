@@ -77,7 +77,7 @@ def generate_launch_description():
         executable='web_video_server',
         name='web_video_server',
         output='screen',
-        respawn=False,
+        respawn=True,
     )
 
     ui_server = Node(
@@ -123,9 +123,9 @@ def generate_launch_description():
         executable='capture',
         name='capture',
         output='screen',
-        respawn=False,
+        respawn=True,
         parameters=[
-            {"camera_path": "/dev/video0"},
+            {"camera_path": "/dev/v4l/by-id/usb-046d_C922_Pro_Stream_Webcam_078E232F-video-index0"},
         ],  
     )
 
@@ -142,7 +142,7 @@ def generate_launch_description():
         executable='hand_track.py',
         name='hand_track',
         output='screen',
-        respawn=False,
+        respawn=True,
     )
 
     face_detection = Node(
@@ -150,7 +150,15 @@ def generate_launch_description():
         executable='face_detection.py',
         name='face_detection',
         output='screen',
-        respawn=False,
+        respawn=True,
+    )
+
+    human_pose = Node(
+        package='vision',
+        executable='human_pose.py',
+        name='human_pose',
+        output='screen',
+        respawn=True,
     )
 
 
@@ -166,8 +174,9 @@ def generate_launch_description():
             # audio_controller,
             
             capture,
-            hand_track,
-            face_detection,
+            #hand_track,
+            #face_detection,
+            human_pose,
             #detection,
 
             # telemetry,

@@ -13,7 +13,7 @@ class DetectionNode(Node):
         self.publisher = self.create_publisher(Image, 'camera/image_raw', 10)
         self.bridge = CvBridge()
 
-        self.cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+        self.cap = cv2.VideoCapture(2, cv2.CAP_V4L2)
 
         if not self.cap.isOpened():
             self.get_logger().error("Camera not found / failed to open.")
