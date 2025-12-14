@@ -1,0 +1,11 @@
+%YAML 1.2
+---
+launch:
+  - node:
+      pkg: "reeman_api_service"
+      exec: "reeman_api_server"
+      name: "reeman_api_service"
+  - node:
+      pkg: "reeman_pose"
+      exec: "pozyx_to_reeman_pose_server"
+      name: "pozyx_to_reeman_service"

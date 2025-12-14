@@ -1,0 +1,12 @@
+%YAML 1.2
+---
+launch:
+    - node:
+        pkg: "pozyx"
+        exec: "uwb_pub"
+    - node:
+        pkg: "reeman_pose"
+        exec: "reeman_pose_pub"
+    - node:
+        pkg: "dual_leg"
+        exec: "talker"

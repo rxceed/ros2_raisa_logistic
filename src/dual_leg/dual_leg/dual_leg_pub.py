@@ -131,7 +131,7 @@ class publisher(Node):
         super().__init__("dual_leg_publisher")
         self.pub_left = self.create_publisher(Float64, "dual_leg_l", 10)
         self.pub_right = self.create_publisher(Float64, "dual_leg_r", 10)
-        timer_period = 0.5
+        timer_period = 0.3
         self.timer = self.create_timer(timer_period, self.callback)
 
     def callback(self):
