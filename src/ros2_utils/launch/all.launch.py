@@ -161,6 +161,14 @@ def generate_launch_description():
         respawn=True,
     )
 
+    pose_data_logger = Node(
+        package='vision',
+        executable='pose_data_logger.py',
+        name='pose_data_logger',
+        output='screen',
+        respawn=True,
+    )
+
 
     return LaunchDescription(
         [
@@ -176,7 +184,8 @@ def generate_launch_description():
             capture,
             #hand_track,
             #face_detection,
-            human_pose,
+            #human_pose,
+            pose_data_logger,
             #detection,
 
             # telemetry,

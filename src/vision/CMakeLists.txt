@@ -53,6 +53,7 @@ install(
     script/hand_track.py
     script/face_detection.py
     script/human_pose.py
+    script/pose_data_logger.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

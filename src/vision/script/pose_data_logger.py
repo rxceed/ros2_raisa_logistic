@@ -13,12 +13,26 @@ from cv_bridge import CvBridge
 import threading
 import queue
 import time
+import os
+import csv
+from datetime import datetime
 
 
-class HumanPose(Node):
+class PoseDataLogger(Node):
 
     def __init__(self):
-        super().__init__('human_pose_node')
+        super().__init__('pose_data_logger')
+
+        # ================= ACTIVITY LABEL =================
+        self.current_activity = "standing"
+
+        self.activity_map = {
+            ord('1'): "standing",
+            ord('2'): "walking",
+            ord('3'): "sitting",
+            ord('4'): "picking",
+            ord('5'): "waving",
+        }
 
         # ================= ROS INTERFACES =================
         self.sub_image = self.create_subscription(
@@ -36,7 +50,7 @@ class HumanPose(Node):
 
         self.pub_debug_image = self.create_publisher(
             Image,
-            '/vision/human_pose_frame',
+            '/vision/pose_logger_frame',
             1
         )
 
@@ -59,6 +73,28 @@ class HumanPose(Node):
             min_tracking_confidence=0.5
         )
 
+        # ================= DATASET LOGGER =================
+        self.dataset_dir = os.path.expanduser(
+            "./skeleton_data_logs/"
+        )
+        os.makedirs(self.dataset_dir, exist_ok=True)
+
+        timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+        self.csv_path = os.path.join(
+            self.dataset_dir,
+            f"pose_logger_{self.current_activity}_{timestamp}.csv"
+        )
+
+        self.csv_file = open(self.csv_path, "w", newline="")
+        self.csv_writer = csv.writer(self.csv_file)
+        self.csv_writer.writerow(
+            ["timestamp", "zone", "activity", "joint", "x", "y", "z", "confidence"]
+        )
+
+        self.get_logger().info("Pose Data Logger started")
+        self.get_logger().info("Hotkeys: [1-5]=activity | [q]=quit")
+        self.get_logger().info(f"CSV output: {self.csv_path}")
+
         # ================= THREADING =================
         self.frame_queue = queue.Queue(maxsize=2)
         self.stop_event = threading.Event()
@@ -68,22 +104,16 @@ class HumanPose(Node):
         )
         self.thread.start()
 
-        self.get_logger().info("HumanPose Node (Mirror + Flip 180 Active)")
-
     # ===================================================
-    # ROS IMAGE CALLBACK
+    # IMAGE CALLBACK
     # ===================================================
     def image_callback(self, msg: Image):
         try:
             frame = self.bridge.imgmsg_to_cv2(msg, "bgr8")
 
-            # ===== MIRROR + FLIP 180 =====
-            # Mirror (horizontal)
+            # Mirror + Flip 180
             frame = cv2.flip(frame, 1)
-
-            # Flip 180 derajat (horizontal + vertical)
             frame = cv2.flip(frame, -1)
-            # ============================
 
             if not self.frame_queue.full():
                 self.frame_queue.put((frame, msg.header))
@@ -103,10 +133,10 @@ class HumanPose(Node):
             frame, header = self.frame_queue.get()
             results = self.process_frame(frame)
             if results is not None:
-                self.publish_pose(results, frame, header)
+                self.publish_and_log(results, frame, header)
 
     # ===================================================
-    # MEDIAPIPE PROCESSING
+    # MEDIAPIPE
     # ===================================================
     def process_frame(self, frame):
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -124,44 +154,56 @@ class HumanPose(Node):
         zone = int((x_px / frame_width) * segments)
         return min(max(zone, 0), segments - 1)
 
-    def draw_vertical_hud(self, frame, segments=4):
+    def draw_hud(self, frame, zone):
         h, w, _ = frame.shape
-        step = w // segments
+        step = w // 4
 
-        for i in range(1, segments):
-            x = i * step
-            cv2.line(frame, (x, 0), (x, h), (255, 255, 255), 2)
+        for i in range(1, 4):
+            cv2.line(frame, (i * step, 0), (i * step, h), (255, 255, 255), 2)
 
-        for i in range(segments):
-            cv2.putText(
-                frame,
-                f"ZONE {i}",
-                (i * step + 15, 30),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.8,
-                (255, 255, 255),
-                2
-            )
+        text = f"ACTIVITY: {self.current_activity}"
+        (tw, _), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.9, 2)
 
-    def draw_skeleton_zone_label(self, frame, results, zone):
-        nose = results.pose_landmarks.landmark[0]
-        x_px = int(nose.x * frame.shape[1])
-        y_px = int(nose.y * frame.shape[0]) - 20
+        cv2.putText(
+            frame,
+            text,
+            (w - tw - 20, 40),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.9,
+            (255, 255, 255),
+            2
+        )
 
         cv2.putText(
             frame,
             f"ZONE {zone}",
-            (x_px, max(y_px, 30)),
+            (20, 40),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.9,
-            (0, 255, 255),
+            (255, 255, 0),
             2
         )
 
     # ===================================================
-    # PUBLISH POSE + HUD IMAGE
+    # HOTKEY
     # ===================================================
-    def publish_pose(self, results, frame, header):
+    def handle_hotkeys(self):
+        key = cv2.waitKey(1) & 0xFF
+
+        if key == ord('q'):
+            self.get_logger().info("Shutdown requested")
+            rclpy.shutdown()
+
+        elif key in self.activity_map:
+            new_activity = self.activity_map[key]
+            if new_activity != self.current_activity:
+                self.current_activity = new_activity
+                self.get_logger().info(f"Activity changed to: {self.current_activity}")
+
+    # ===================================================
+    # LOG + PUBLISH
+    # ===================================================
+    def publish_and_log(self, results, frame, header):
         pose_array = PoseArray()
         pose_array.header = header
         pose_array.header.frame_id = "camera"
@@ -176,11 +218,17 @@ class HumanPose(Node):
 
         self.pub_pose.publish(pose_array)
 
-        active_zone = self.compute_active_zone(results, frame.shape[1])
+        zone = self.compute_active_zone(results, frame.shape[1])
+        self.pub_zone.publish(Int32(data=zone))
 
-        zone_msg = Int32()
-        zone_msg.data = active_zone
-        self.pub_zone.publish(zone_msg)
+        t = header.stamp.sec + header.stamp.nanosec * 1e-9
+
+        for idx, lm in enumerate(results.pose_landmarks.landmark):
+            joint = self.mp_pose.PoseLandmark(idx).name.lower()
+            self.csv_writer.writerow([
+                t, zone, self.current_activity,
+                joint, lm.x, lm.y, lm.z, lm.visibility
+            ])
 
         self.mp_draw.draw_landmarks(
             frame,
@@ -188,12 +236,11 @@ class HumanPose(Node):
             self.mp_pose.POSE_CONNECTIONS
         )
 
-        self.draw_vertical_hud(frame, segments=4)
-        self.draw_skeleton_zone_label(frame, results, active_zone)
+        self.draw_hud(frame, zone)
+        self.handle_hotkeys()
 
         img_msg = self.bridge.cv2_to_imgmsg(frame, "bgr8")
         img_msg.header = header
-        img_msg.header.frame_id = "camera"
         self.pub_debug_image.publish(img_msg)
 
     # ===================================================
@@ -202,12 +249,14 @@ class HumanPose(Node):
     def destroy_node(self):
         self.stop_event.set()
         self.thread.join(timeout=1.0)
+        self.csv_file.close()
+        cv2.destroyAllWindows()
         super().destroy_node()
 
 
 def main(args=None):
     rclpy.init(args=args)
-    node = HumanPose()
+    node = PoseDataLogger()
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
