@@ -184,8 +184,8 @@ def generate_launch_description():
             capture,
             #hand_track,
             #face_detection,
-            #human_pose,
-            pose_data_logger,
+            human_pose,
+            #pose_data_logger,
             #detection,
 
             # telemetry,

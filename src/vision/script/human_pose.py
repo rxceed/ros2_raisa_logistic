@@ -7,7 +7,7 @@ from rclpy.node import Node
 
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import Pose, PoseArray
-from std_msgs.msg import Int32
+from std_msgs.msg import Int32, String
 from cv_bridge import CvBridge
 
 import threading
@@ -46,6 +46,12 @@ class HumanPose(Node):
             10
         )
 
+        self.pub_zone_state = self.create_publisher(
+            String,
+            '/vision/human_zone_state',
+            10
+        )
+
         # ================= CV / MEDIAPIPE =================
         self.bridge = CvBridge()
         self.mp_pose = mp.solutions.pose
@@ -59,6 +65,9 @@ class HumanPose(Node):
             min_tracking_confidence=0.5
         )
 
+        # ================= ZONE STATE =================
+        self.prev_zone = None
+
         # ================= THREADING =================
         self.frame_queue = queue.Queue(maxsize=2)
         self.stop_event = threading.Event()
@@ -68,8 +77,6 @@ class HumanPose(Node):
         )
         self.thread.start()
 
-        self.get_logger().info("HumanPose Node (Mirror + Flip 180 Active)")
-
     # ===================================================
     # ROS IMAGE CALLBACK
     # ===================================================
@@ -77,13 +84,9 @@ class HumanPose(Node):
         try:
             frame = self.bridge.imgmsg_to_cv2(msg, "bgr8")
 
-            # ===== MIRROR + FLIP 180 =====
-            # Mirror (horizontal)
+            # Mirror + flip 180
             frame = cv2.flip(frame, 1)
-
-            # Flip 180 derajat (horizontal + vertical)
             frame = cv2.flip(frame, -1)
-            # ============================
 
             if not self.frame_queue.full():
                 self.frame_queue.put((frame, msg.header))
@@ -102,8 +105,8 @@ class HumanPose(Node):
 
             frame, header = self.frame_queue.get()
             results = self.process_frame(frame)
-            if results is not None:
-                self.publish_pose(results, frame, header)
+            if results:
+                self.publish_all(results, frame, header)
 
     # ===================================================
     # MEDIAPIPE PROCESSING
@@ -116,26 +119,50 @@ class HumanPose(Node):
         return results
 
     # ===================================================
-    # HUD UTILS
+    # ZONE COMPUTATION (LEFT -> RIGHT)
     # ===================================================
-    def compute_active_zone(self, results, frame_width, segments=4):
+    def compute_active_zone(self, results, frame_width):
         nose = results.pose_landmarks.landmark[0]
-        x_px = int(nose.x * frame_width)
-        zone = int((x_px / frame_width) * segments)
-        return min(max(zone, 0), segments - 1)
+        x_norm = nose.x  # 0.0 = kiri, 1.0 = kanan
 
-    def draw_vertical_hud(self, frame, segments=4):
+        if x_norm < 0.25:
+            return 0
+        elif x_norm < 0.50:
+            return 1
+        elif x_norm < 0.75:
+            return 2
+        else:
+            return 3
+
+    # ===================================================
+    # ZONE STATE MACHINE
+    # ===================================================
+    def publish_zone_state(self, zone):
+        if self.prev_zone is None:
+            self.prev_zone = zone
+            return
+
+        if zone != self.prev_zone:
+            msg = String()
+            msg.data = f"EXIT {self.prev_zone} -> ENTER {zone}"
+            self.pub_zone_state.publish(msg)
+            self.prev_zone = zone
+
+    # ===================================================
+    # HUD
+    # ===================================================
+    def draw_hud(self, frame):
         h, w, _ = frame.shape
-        step = w // segments
+        step = w // 4
 
-        for i in range(1, segments):
-            x = i * step
-            cv2.line(frame, (x, 0), (x, h), (255, 255, 255), 2)
+        for i in range(1, 4):
+            cv2.line(frame, (i * step, 0), (i * step, h), (255, 255, 255), 2)
 
-        for i in range(segments):
+        labels = ["ZONE 0", "ZONE 1", "ZONE 2", "ZONE 3"]
+        for i, label in enumerate(labels):
             cv2.putText(
                 frame,
-                f"ZONE {i}",
+                label,
                 (i * step + 15, 30),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.8,
@@ -143,25 +170,25 @@ class HumanPose(Node):
                 2
             )
 
-    def draw_skeleton_zone_label(self, frame, results, zone):
+    def draw_zone_label(self, frame, results, zone):
         nose = results.pose_landmarks.landmark[0]
-        x_px = int(nose.x * frame.shape[1])
-        y_px = int(nose.y * frame.shape[0]) - 20
+        x = int(nose.x * frame.shape[1])
+        y = int(nose.y * frame.shape[0]) - 20
 
         cv2.putText(
             frame,
             f"ZONE {zone}",
-            (x_px, max(y_px, 30)),
+            (x, max(y, 30)),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.9,
-            (0, 255, 255),
+            (255, 255, 255),
             2
         )
 
     # ===================================================
-    # PUBLISH POSE + HUD IMAGE
+    # PUBLISH ALL
     # ===================================================
-    def publish_pose(self, results, frame, header):
+    def publish_all(self, results, frame, header):
         pose_array = PoseArray()
         pose_array.header = header
         pose_array.header.frame_id = "camera"
@@ -176,11 +203,9 @@ class HumanPose(Node):
 
         self.pub_pose.publish(pose_array)
 
-        active_zone = self.compute_active_zone(results, frame.shape[1])
-
-        zone_msg = Int32()
-        zone_msg.data = active_zone
-        self.pub_zone.publish(zone_msg)
+        zone = self.compute_active_zone(results, frame.shape[1])
+        self.pub_zone.publish(Int32(data=zone))
+        self.publish_zone_state(zone)
 
         self.mp_draw.draw_landmarks(
             frame,
@@ -188,8 +213,8 @@ class HumanPose(Node):
             self.mp_pose.POSE_CONNECTIONS
         )
 
-        self.draw_vertical_hud(frame, segments=4)
-        self.draw_skeleton_zone_label(frame, results, active_zone)
+        self.draw_hud(frame)
+        self.draw_zone_label(frame, results, zone)
 
         img_msg = self.bridge.cv2_to_imgmsg(frame, "bgr8")
         img_msg.header = header
