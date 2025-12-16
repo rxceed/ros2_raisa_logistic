@@ -11,6 +11,8 @@ find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/PozyxToReeman.srv"
+  "msg/DualLeg.msg"
+  "srv/LogisticNavStatus.srv"
 )
 # uncomment the following section in order to fill in
 # further dependencies manually.

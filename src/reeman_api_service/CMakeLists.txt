@@ -11,21 +11,54 @@ find_package(rclcpp REQUIRED)
 find_package(reeman_api_interface REQUIRED)
 find_package(CURL REQUIRED)
 
-add_executable(reeman_api_server src/reeman_api_srv.cpp src/httpClient.cpp)
-ament_target_dependencies(reeman_api_server rclcpp reeman_api_interface CURL)
+add_executable(get_reeman_pose_server src/get_reeman_pose_srv.cpp src/httpClient.cpp)
+ament_target_dependencies(get_reeman_pose_server rclcpp reeman_api_interface CURL)
+
+add_executable(get_reeman_speed_server src/get_reeman_speed_srv.cpp src/httpClient.cpp)
+ament_target_dependencies(get_reeman_speed_server rclcpp reeman_api_interface CURL)
+
+add_executable(post_reeman_speed_server src/post_reeman_speed_srv.cpp src/httpClient.cpp)
+ament_target_dependencies(post_reeman_speed_server rclcpp reeman_api_interface CURL)
+
+add_executable(post_reeman_max_speed_server src/post_reeman_max_speed_srv.cpp src/httpClient.cpp)
+ament_target_dependencies(post_reeman_max_speed_server rclcpp reeman_api_interface CURL)
+
+add_executable(post_reeman_nav_server src/post_reeman_nav_srv.cpp src/httpClient.cpp)
+ament_target_dependencies(post_reeman_nav_server rclcpp reeman_api_interface CURL)
 
 include_directories(${PROJECT_NAME}/include/${PROJECT_NAME})
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
 
-target_include_directories(reeman_api_server PUBLIC
+target_include_directories(get_reeman_pose_server PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+
+target_include_directories(get_reeman_speed_server PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+
+target_include_directories(post_reeman_speed_server PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+
+target_include_directories(post_reeman_max_speed_server PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+
+target_include_directories(post_reeman_nav_server PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
 )
 
 install(TARGETS
-  reeman_api_server
+  get_reeman_pose_server
+  get_reeman_speed_server
+  post_reeman_speed_server
+  post_reeman_max_speed_server
+  post_reeman_nav_server
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)

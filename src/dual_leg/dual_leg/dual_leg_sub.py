@@ -1,6 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float64
+from custom_interface.msg import DualLeg
 import time
 import numpy as np
 
@@ -10,18 +11,15 @@ right_angle = 0
 class subscriber(Node):
     def __init__(self):
         super().__init__("dual_leg_subscriber")
-        self.sub_l = self.create_subscription(Float64, "dual_leg_l", self.callback_l, 10)
-        self.sub_r = self.create_subscription(Float64, "dual_leg_r", self.callback_r, 10)
-        self.sub_l
-        self.sub_r
-    def callback_l(self, msg):
-        global left_angle
-        self.get_logger().info(f"Heard L: {msg.data}")
-        left_angle = msg.data
-    def callback_r(self, msg):
-        global right_angle
-        self.get_logger().info(f"Heard R: {msg.data}")
-        right_angle = msg.data
+        self.sub_leg = self.create_subscription(DualLeg, "dual_leg", self.callback_leg, 10)
+        self.sub_leg
+    def callback_leg(self, msg):
+        global right_angle, left_angle
+        right_angle = msg.right_angle
+        left_angle = msg.left_angle
+        cos_l = np.cos(left_angle)
+        cos_r = np.cos(right_angle)
+        self.get_logger().info(f"Heard Cos R: {cos_r} | Cos L: {cos_l}")
 
 def main(arg=None):
     rclpy.init(args=arg)

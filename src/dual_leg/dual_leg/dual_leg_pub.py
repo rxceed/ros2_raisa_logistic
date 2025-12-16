@@ -9,10 +9,12 @@ import time
 import struct
 import threading
 from datetime import datetime
+import numpy as np
 
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float64
+from custom_interface.msg import DualLeg
 
 # UDP settings - LEFT LEG
 UDP_IP_LEFT = "0.0.0.0"
@@ -129,19 +131,15 @@ def display_thread():
 class publisher(Node):
     def __init__(self):
         super().__init__("dual_leg_publisher")
-        self.pub_left = self.create_publisher(Float64, "dual_leg_l", 10)
-        self.pub_right = self.create_publisher(Float64, "dual_leg_r", 10)
+        self.pub = self.create_publisher(DualLeg, "dual_leg", 10)
         timer_period = 0.3
         self.timer = self.create_timer(timer_period, self.callback)
 
     def callback(self):
-        msg_l = Float64()
-        msg_r = Float64()
-        msg_l.data = left_angle
-        msg_r.data = right_angle
-        self.pub_left.publish(msg_l)
-        self.pub_right.publish(msg_r)
-        self.get_logger().info(f"Publishing: left: {msg_l.data} | right: {msg_r.data}")
+        msg = DualLeg()
+        msg.right_angle = right_angle
+        msg.left_angle = left_angle
+        self.pub.publish(msg)
 
 def main(args=None):
     global left_command_socket, right_command_socket

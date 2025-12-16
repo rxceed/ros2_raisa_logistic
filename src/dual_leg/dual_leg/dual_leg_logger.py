@@ -5,6 +5,7 @@ from rclpy.node import Node
 from std_msgs.msg import Float64
 import time
 import os
+import math
 
 FILENAME = f"data_log_{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}.csv"
 

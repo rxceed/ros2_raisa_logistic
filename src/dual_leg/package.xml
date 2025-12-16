@@ -10,6 +10,8 @@
   <exec_depend>rclpy</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>requests</exec_depend>
+  <exec_depend>numpy</exec_depend>
+  <exec_depend>custom_interface</exec_depend>
 
 
   <test_depend>ament_copyright</test_depend>

@@ -1,0 +1,2 @@
+float64 right_angle
+float64 left_angle
