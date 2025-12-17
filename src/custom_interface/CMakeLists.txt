@@ -12,6 +12,7 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/PozyxToReeman.srv"
   "msg/DualLeg.msg"
+  "msg/ActivityForecast.msg"
   "srv/LogisticNavStatus.srv"
 )
 # uncomment the following section in order to fill in

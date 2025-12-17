@@ -4,12 +4,15 @@ launch:
     - node:
         pkg: "pozyx"
         exec: "uwb_pub"
+        respawn: "True"
     - node:
         pkg: "reeman_pose"
         exec: "reeman_pose_pub"
+        respawn: "True"
     - node:
         pkg: "dual_leg"
         exec: "talker"
+        respawn: "True"
     - node:
         pkg: "vision"
         exec: "capture"
@@ -22,3 +25,9 @@ launch:
     - node:
         pkg: "vision"
         exec: "human_pose.py"
+        respawn: "True"
+
+    - node:
+        pkg: "activity_pattern"
+        exec: "inference_pub"
+        respawn: "True"

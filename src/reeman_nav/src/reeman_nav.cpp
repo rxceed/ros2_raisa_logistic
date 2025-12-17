@@ -29,9 +29,7 @@ class navigation : public rclcpp::Node
             left_angle = msg_dualLeg->left_angle;
             if(right_angle > 60.0 || left_angle > 60.0)
             {
-                printf("Trig! 1!\n");
                 post_nav();
-                printf("Trig! 2!\n");
             }   
         };
         subscriber_dualLeg = this->create_subscription<custom_interface::msg::DualLeg>("dual_leg", 10, callback_sub_dualLeg);
