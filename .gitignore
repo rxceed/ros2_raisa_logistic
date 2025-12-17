@@ -5,3 +5,5 @@ log
 secret.py
 secret.hpp
 mp_env
+python-venv
+NON_ROS_PACKAGE

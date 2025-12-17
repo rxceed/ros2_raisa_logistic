@@ -6,8 +6,9 @@ void logisticNavStatus(const std::shared_ptr<custom_interface::srv::LogisticNavS
 {
     //status
     //0: idle
-    //1: moving
-    //2: goal reached
+    //1: standing-by
+    //2: moving
+    //3: goal reached
     static char logisticNavStatus = 0;
     //action
     //0: get

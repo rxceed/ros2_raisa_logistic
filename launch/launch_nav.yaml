@@ -1,0 +1,6 @@
+%YAML 1.2
+---
+launch:
+  - node:
+        pkg: "reeman_nav"
+        exec: "reeman_nav"

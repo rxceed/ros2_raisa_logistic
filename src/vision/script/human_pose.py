@@ -14,7 +14,6 @@ import threading
 import queue
 import time
 
-
 class HumanPose(Node):
 
     def __init__(self):
