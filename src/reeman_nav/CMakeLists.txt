@@ -18,8 +18,11 @@ find_package(reeman_api_interface REQUIRED)
 
 add_executable(logistic_nav_status_server src/logistic_nav_status_srv.cpp)
 add_executable(reeman_nav src/reeman_nav.cpp)
+add_executable(pose_tracker src/reeman_human_pose_track.cpp)
 ament_target_dependencies(logistic_nav_status_server rclcpp custom_interface)
 ament_target_dependencies(reeman_nav rclcpp geometry_msgs custom_interface reeman_api_interface)
+ament_target_dependencies(pose_tracker rclcpp std_msgs reeman_api_interface)
+
 
 target_include_directories(logistic_nav_status_server PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -33,6 +36,7 @@ target_include_directories(reeman_nav PUBLIC
 
 install(TARGETS
   logistic_nav_status_server
+  pose_tracker
   reeman_nav
   DESTINATION lib/${PROJECT_NAME})
 
