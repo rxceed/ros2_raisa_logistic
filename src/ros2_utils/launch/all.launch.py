@@ -126,6 +126,7 @@ def generate_launch_description():
         respawn=True,
         parameters=[
             {"camera_path": "/dev/v4l/by-id/usb-046d_C922_Pro_Stream_Webcam_078E232F-video-index0"},
+            #{"camera_path": "/dev/video0"},
         ],  
     )
 

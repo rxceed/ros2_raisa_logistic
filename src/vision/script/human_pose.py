@@ -9,6 +9,7 @@ from sensor_msgs.msg import Image
 from geometry_msgs.msg import Pose, PoseArray
 from std_msgs.msg import Int32, String
 from cv_bridge import CvBridge
+from std_msgs.msg import Bool
 
 import threading
 import queue
@@ -48,6 +49,12 @@ class HumanPose(Node):
         self.pub_zone_state = self.create_publisher(
             String,
             '/vision/human_zone_state',
+            10
+        )
+
+        self.pub_hip_visible = self.create_publisher(
+            Bool,
+            '/vision/hip_visible',
             10
         )
 
@@ -106,6 +113,8 @@ class HumanPose(Node):
             results = self.process_frame(frame)
             if results:
                 self.publish_all(results, frame, header)
+            else:
+                self.pub_hip_visible.publish(Bool(data=False))
 
     # ===================================================
     # MEDIAPIPE PROCESSING
@@ -132,6 +141,16 @@ class HumanPose(Node):
             return 2
         else:
             return 3
+        
+    def is_hip_visible(self, results, threshold=0.5):
+        if not results or not results.pose_landmarks:
+            return False
+        
+        landmarks = results.pose_landmarks.landmark
+        left_hip = landmarks[23].visibility > threshold
+        right_hip = landmarks[24].visibility > threshold
+        
+        return left_hip or right_hip
 
     # ===================================================
     # ZONE STATE MACHINE
@@ -219,6 +238,9 @@ class HumanPose(Node):
         img_msg.header = header
         img_msg.header.frame_id = "camera"
         self.pub_debug_image.publish(img_msg)
+
+        hip_visible = self.is_hip_visible(results)
+        self.pub_hip_visible.publish(Bool(data=hip_visible))
 
     # ===================================================
     # CLEANUP
