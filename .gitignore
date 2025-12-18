@@ -7,3 +7,5 @@ secret.hpp
 mp_env
 python-venv
 NON_ROS_PACKAGE
+make.sh
+run.sh
