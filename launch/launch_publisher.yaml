@@ -28,6 +28,6 @@ launch:
         respawn: "True"
 
     - node:
-        pkg: "activity_pattern"
+        pkg: "activity_pattern_recognition"
         exec: "inference_pub"
         respawn: "True"

@@ -6,12 +6,18 @@
 #include "custom_interface/srv/logistic_nav_status.hpp"
 #include "custom_interface/msg/activity_forecast.hpp"
 #include "reeman_api_interface/srv/post_speed.hpp"
-#include "reeman_api_interface/srv/post_nav.hpp"
+#include "reeman_api_interface/srv/post_nav_point.hpp"
 
 #include <memory>
 #include <chrono>
 
 using namespace std::chrono_literals;
+
+typedef struct{
+    float x;
+    float y;
+    float theta;
+} pose;
 
 class navigation : public rclcpp::Node
 {
@@ -23,30 +29,6 @@ class navigation : public rclcpp::Node
             odom_x = msg_reeman->x;
             odom_y = msg_reeman->y;
             odom_theta = msg_reeman->theta;
-            if(std::abs(target_x-odom_x) <= 0.15 && std::abs(target_y-odom_y) <= 0.15)
-            {
-                auto req_logisticNavStatus = std::make_shared<custom_interface::srv::LogisticNavStatus::Request>();
-                req_logisticNavStatus->set__action(1);
-                req_logisticNavStatus->set__state(2);
-                while (!client_logisticNavStatus->wait_for_service(100ms))
-                {
-                    if (!rclcpp::ok()) 
-                    {
-                        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for the logistic_nav_status service. Exiting.");
-                        return;
-                    }
-                    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "service logistic_nav_status not available, waiting again...");
-                }
-                auto res_logisticNavStatus = client_logisticNavStatus->async_send_request(req_logisticNavStatus);
-                if(rclcpp::spin_until_future_complete(node_logisticNavStatus, res_logisticNavStatus) == rclcpp::FutureReturnCode::SUCCESS)
-                {
-                    auto getRes_logisticNavStatus = res_logisticNavStatus.get();
-                }
-                else 
-                {
-                    RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service logistic_nav_status");
-                }
-            }
         };
         auto callback_sub_uwb = [this](geometry_msgs::msg::Pose2D::UniquePtr msg_uwb)->void
         {
@@ -58,11 +40,6 @@ class navigation : public rclcpp::Node
         {
             right_angle = msg_dualLeg->right_angle;
             left_angle = msg_dualLeg->left_angle;
-            /*
-            if(right_angle > 60.0 && left_angle > 60.0)
-            {
-                post_nav();
-            }*/
         };
         auto callback_sub_forecast = [this](custom_interface::msg::ActivityForecast::UniquePtr msg_forecast)->void
         {
@@ -97,10 +74,16 @@ class navigation : public rclcpp::Node
                 RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service logistic_nav_status");
             }
 
-            if(time_to_arrival < 6.0 && logisticNavStatus == 0)
+            //Workbench2 7.64,2.76,1.76
+            float goal_x = 7.64;
+            float goal_y = 2.76;
+            //posisi robot ke workbench: sqrt(x^2+y^2)
+            if(time_to_arrival < 12.0*(std::sqrt((odom_x-goal_x)*(odom_x-goal_x) + (odom_y-goal_y)*(odom_y-goal_y))/std::sqrt(goal_x*goal_x+goal_y*goal_y)) && logisticNavStatus == 0)
             {
                 post_nav();
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Nav Sent!");
             }
+           RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Logistic Nav State: %d", logisticNavStatus);
         };
         subscriber_dualLeg = this->create_subscription<custom_interface::msg::DualLeg>("dual_leg", 10, callback_sub_dualLeg);
         subscriber_uwb = this->create_subscription<geometry_msgs::msg::Pose2D>("uwb_pose2d", 10, callback_sub_uwb);
@@ -164,9 +147,12 @@ class navigation : public rclcpp::Node
             RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service pozyx_to_reeman");
         }
 
-        req_nav->set__x(reeman_x);
-        req_nav->set__y(reeman_y);
-        req_nav->set__theta(0);
+        
+
+        //Workbench2 7.64,2.76,1.76
+        req_nav->set__x(7.64);
+        req_nav->set__y(2.76);
+        req_nav->set__theta(1.76);
         
         while (!client_postReemanNav_nav->wait_for_service(100ms))
         {
@@ -204,11 +190,11 @@ class navigation : public rclcpp::Node
     float right_angle, left_angle;
     float pozyx_x, pozyx_y, pozyx_theta; //pozyx
     float reeman_x, reeman_y, reeman_theta;
-    float target_x, target_y, target_theta;
     float odom_x, odom_y, odom_theta;
     std::string forecast_actions[4];
     float forecast_confidences[4];
     float time_to_arrival;
+    std::string navPoints = {"origin", "workbench_1", "workbench_2", "prod_1", "prod_2"};
 };
 
 int main(int argc, char** argv)

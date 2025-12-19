@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'activity_pattern'
+package_name = 'test_tensorflow'
 
 setup(
     name=package_name,
@@ -24,7 +24,6 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'inference_pub = activity_pattern.activity_pattern_inference:main',
         ],
     },
 )

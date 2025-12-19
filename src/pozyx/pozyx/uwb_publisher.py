@@ -14,6 +14,7 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 from time import sleep
+import math
 
 import rclpy
 from rclpy.node import Node
@@ -23,6 +24,8 @@ from pypozyx import (
     PozyxSerial, get_first_pozyx_serial_port, PozyxConstants,
     Coordinates, DeviceCoordinates, SensorData, POZYX_SUCCESS
 )
+
+yaw_offset = None
 
 # ==========================
 # REGRESSION
@@ -116,7 +119,7 @@ class UwbPose2DPublisher(Node):
         super().__init__('uwb_pose2d_publisher')
         self.pub = self.create_publisher(Pose2D, 'uwb_pose2d', 10)
 
-    def publish(self, x, y, theta=0.0):
+    def publish(self, x, y, theta):
         msg = Pose2D()
         msg.x = float(x)
         msg.y = float(y)
@@ -136,6 +139,25 @@ def get_position(po, rid):
         remote_id=rid
     )
     return (ok == POZYX_SUCCESS, pos)
+
+def read_sensors(po, rid):
+    s = SensorData()
+    ok = po.getAllSensorData(s, rid)
+    return s if ok == POZYX_SUCCESS else None
+
+
+def get_raw_yaw(po, rid):
+    s = read_sensors(po, rid)
+    if s is None:
+        return None
+
+    try:
+        yaw = float(s.euler_angles.heading)
+        if yaw > 180:
+            yaw -= 360
+        return yaw
+    except:
+        return None
 
 
 # ==========================
@@ -178,6 +200,7 @@ def uwb_to_odom(x, y):
 # MAIN
 # ==========================
 def main():
+    global yaw_offset
     rclpy.init()
     ros_node = UwbPose2DPublisher()
 
@@ -211,10 +234,20 @@ def main():
                 kalman.predict(LOOP_DT)
                 kalman.update(meas)
 
+                yaw = get_raw_yaw(pozyx, TAG_TARGET)
+                if yaw is not None:
+                    if yaw_offset is None:
+                        yaw_offset = yaw
+                    yaw0 = yaw - yaw_offset
+                else:
+                    yaw0 = 0.0
+
+                yaw_rad = math.radians(yaw0)
+
                 fx, fy = kalman.get_xy()
                 ux, uy = uwb_to_odom(fx, fy)
 
-                ros_node.publish(ux, uy, 0.0)
+                ros_node.publish(ux, uy, round(yaw_rad, 6))
                 # print(f"ROS2 Pose2D → x:{ux:.3f} y:{uy:.3f}")
                 # use ros2 log info instead of print if needed
                 # ros_node.get_logger().info(f"ROS2 Pose2D → x:{ux:.3f} y:{uy:.3f}")
