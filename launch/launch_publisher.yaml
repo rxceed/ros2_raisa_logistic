@@ -13,21 +13,9 @@ launch:
         pkg: "dual_leg"
         exec: "talker"
         respawn: "True"
-    - node:
-        pkg: "vision"
-        exec: "capture"
-        output: "screen"
-        respawn: "True"
-        param: 
-        - 
-            name: "camera_path"
-            value: "/dev/v4l/by-id/usb-Azurewave_USB2.0_HD_UVC_WebCam_0x0001-video-index0"
-    - node:
-        pkg: "vision"
-        exec: "human_pose.py"
-        respawn: "True"
 
-    - node:
-        pkg: "activity_pattern_recognition"
-        exec: "inference_pub"
-        respawn: "True"
+#
+#    - node:
+#        pkg: "activity_pattern_recognition"
+#        exec: "inference_pub"
+#        respawn: "True"

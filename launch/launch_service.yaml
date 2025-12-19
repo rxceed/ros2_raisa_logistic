@@ -24,6 +24,10 @@ launch:
     - node:
         pkg: "reeman_pose"
         exec: "pozyx_to_reeman_pose_server"
+    
+    - node:
+        pkg: "reeman_api_service"
+        exec: "post_reeman_nav_point_server"
 
     - node:
         pkg: "reeman_nav"

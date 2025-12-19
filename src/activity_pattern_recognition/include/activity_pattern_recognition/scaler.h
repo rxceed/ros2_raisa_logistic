@@ -1,25 +1,6 @@
 #pragma once
 
-// Auto-generated scaler header
-// DO NOT EDIT MANUALLY
+#define FEATURE_DIM 4
 
-// StandardScaler
-static const int input_scaler_dim = 6;
-
-static const float input_scaler_mean[6] = {
-  51.06278513f,
-  51.50955178f,
-  0.15417984f,
-  0.11225653f,
-  -0.02344927f,
-  3.00123880f,
-};
-
-static const float input_scaler_std[6] = {
-  30.70161630f,
-  25.89410126f,
-  0.43975235f,
-  0.41498551f,
-  2.83207530f,
-  2.60580633f,
-};
+static const float SCALER_SCALE[4] = { 0.93547616f, 1.03491939f, 0.11375775f, 0.14982891f };
+static const float SCALER_MIN[4] = { 0.06452384f, -0.03491939f, 0.45862449f, -0.13245027f };

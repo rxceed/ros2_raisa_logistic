@@ -69,7 +69,7 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 # ==========================================================
 
 install(
-  FILES ${CMAKE_CURRENT_LIST_DIR}/src/model/model_frozen.pb
+  FILES ${CMAKE_CURRENT_LIST_DIR}/src/model/bilstm_action_predictor.pb
   DESTINATION share/${PROJECT_NAME}/model
 )
 

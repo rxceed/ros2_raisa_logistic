@@ -1,11 +1,10 @@
-#include <rclcpp/rclcpp.hpp>
+#include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/pose2_d.hpp"
 
 #include "custom_interface/msg/dual_leg.hpp"
 #include "custom_interface/srv/pozyx_to_reeman.hpp"
 #include "custom_interface/srv/logistic_nav_status.hpp"
 #include "custom_interface/msg/activity_forecast.hpp"
-#include "reeman_api_interface/srv/post_speed.hpp"
 #include "reeman_api_interface/srv/post_nav_point.hpp"
 
 #include <memory>
@@ -173,10 +172,6 @@ class navigation : public rclcpp::Node
         {
             RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service post_reeman_nav");
         }
-
-        target_x = reeman_x;
-        target_y = reeman_y;
-        target_theta = reeman_theta;
     };
 
     private:
