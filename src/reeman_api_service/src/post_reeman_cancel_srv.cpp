@@ -10,7 +10,7 @@ void postReemanCancel(const std::shared_ptr<reeman_api_interface::srv::PostCance
 {
     HttpClient client;
     std::string reqBody_str = "{}";
-    std::string response = client.post(POST_SPEED_URL, reqBody_str);
+    std::string response = client.post(POST_CANCEL_NAV_URL, reqBody_str);
     auto parsedResponse = nlohmann::json::parse(response);
     res->set__status(parsedResponse["status"]);
 }

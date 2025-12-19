@@ -11,7 +11,7 @@ void postReemanNavPoint(const std::shared_ptr<reeman_api_interface::srv::PostNav
     HttpClient client;
     nlohmann::json reqBody_json = {{"point", req->point}};
     std::string reqBody_str = reqBody_json.dump();
-    std::string response = client.post(POST_NAV_URL, reqBody_str);
+    std::string response = client.post(POST_NAV_POINT_URL, reqBody_str);
     auto parsedResponse = nlohmann::json::parse(response);
     res->set__status(parsedResponse["status"]);
 }
