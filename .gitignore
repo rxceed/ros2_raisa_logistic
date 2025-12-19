@@ -7,5 +7,6 @@ secret.hpp
 mp_env
 python-venv
 NON_ROS_PACKAGE
+tensorflow
 make.sh
 run.sh

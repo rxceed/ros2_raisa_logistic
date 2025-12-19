@@ -20,7 +20,6 @@ int main(int argc, char** argv)
 {
     rclcpp::init(argc, argv);
     std::shared_ptr<rclcpp::Node> node_postReemanSpeed = rclcpp::Node::make_shared("post_reeman_speed_server");
-    std::shared_ptr<rclcpp::Node> node_postReemanMaxSpeed = rclcpp::Node::make_shared("post_reeman_max_speed_server");
     rclcpp::Service<reeman_api_interface::srv::PostSpeed>::SharedPtr service_postReemanSpeed = node_postReemanSpeed->create_service<reeman_api_interface::srv::PostSpeed>("post_reeman_speed", &postReemanSpeed);
     rclcpp::spin(node_postReemanSpeed);
     rclcpp::shutdown();

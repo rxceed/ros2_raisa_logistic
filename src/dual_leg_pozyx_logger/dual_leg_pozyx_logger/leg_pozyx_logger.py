@@ -19,16 +19,12 @@ right_angle = 0
 x_current = 0
 y_current = 0
 theta = 0
-x_before = 0
-y_before = 0
-x_rel = 0
-y_rel = 0
 
 def log_to_csv(filename, data):
     """
     Appends a list of data as a row to a CSV file.
     """
-    headers = ['timestamp', 'left_leg_angle', 'right_leg_angle', 'x_absolute', 'y_absolute', 'x_relative', 'y_relative', 'action']
+    headers = ['timestamp', 'left_leg_angle', 'right_leg_angle', 'x_absolute', 'y_absolute']
     file_exists = os.path.isfile(filename)
 
     with open(filename, mode='a', newline='') as file:
@@ -57,24 +53,10 @@ class logger(Node):
         y_current = msg.y
         theta = msg.theta
     def callback_log(self):
-        global x_before, y_before, x_current, y_current, x_rel, y_rel, theta, left_angle, right_angle
+        global x_before, y_before, x_current, y_current, left_angle, right_angle
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-        x_rel = abs(x_current - x_before)
-        y_rel = abs(y_current - y_before)
-        print(f"X: {x_rel} | {x_before} | {x_current}")
-        print(f"Y: {y_rel} | {y_before} | {y_current}")
-        action = 1
-        if left_angle >= 65 and right_angle >= 65 and (x_rel < 0.15 and y_rel < 0.15):
-            action = 0
-        elif (x_rel >= 0.15 or y_rel >= 0.15) and (left_angle < 65 and right_angle < 65):
-            action = 2
-        elif (x_rel < 0.15 and y_rel < 0.15) and (left_angle < 65 and right_angle < 65):
-            action = 1
-        data = [current_time, left_angle, right_angle, x_current, y_current, x_rel, y_rel, action]
-        x_before = x_current
-        y_before = y_current
+        data = [current_time, left_angle, right_angle, x_current, y_current]
         log_to_csv(CSV_PATH, data)
-        print(f"R: {right_angle} | L: {left_angle} | Action {action}")
         #print(f"Logged: {data}")
 
 def main(arg=None):
