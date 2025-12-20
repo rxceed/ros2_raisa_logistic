@@ -1,0 +1,7 @@
+
+---
+int32 res
+int32 code
+string goal
+float64 dist
+float64 mileage

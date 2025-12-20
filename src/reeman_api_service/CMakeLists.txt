@@ -32,6 +32,8 @@ ament_target_dependencies(post_reeman_cancel_server rclcpp reeman_api_interface 
 add_executable(post_reeman_nav_point_server src/post_reeman_nav_point_srv.cpp src/httpClient.cpp)
 ament_target_dependencies(post_reeman_nav_point_server rclcpp reeman_api_interface CURL)
 
+add_executable(get_reeman_nav_status_server src/get_reeman_nav_status_srv.cpp src/httpClient.cpp)
+ament_target_dependencies(get_reeman_nav_status_server rclcpp reeman_api_interface CURL)
 
 include_directories(${PROJECT_NAME}/include/${PROJECT_NAME})
 
@@ -70,9 +72,15 @@ target_include_directories(post_reeman_nav_point_server PUBLIC
   $<INSTALL_INTERFACE:include>
 )
 
+target_include_directories(get_reeman_nav_status_server PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+
 install(TARGETS
   get_reeman_pose_server
   get_reeman_speed_server
+  get_reeman_nav_status_server
   post_reeman_speed_server
   post_reeman_max_speed_server
   post_reeman_nav_server

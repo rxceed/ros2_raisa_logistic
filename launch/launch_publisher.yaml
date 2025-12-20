@@ -13,9 +13,12 @@ launch:
         pkg: "dual_leg"
         exec: "talker"
         respawn: "True"
-
-#
-#    - node:
-#        pkg: "activity_pattern_recognition"
-#        exec: "inference_pub"
-#        respawn: "True"
+    - node:
+        pkg: "reeman_nav"
+        exec: "logistic_nav_status_publisher"
+        respawn: "True"
+ 
+    - node:
+        pkg: "activity_pattern_recognition"
+        exec: "inference_pub"
+        respawn: "True"

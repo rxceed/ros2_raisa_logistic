@@ -30,6 +30,10 @@ launch:
         exec: "post_reeman_nav_point_server"
 
     - node:
+        pkg: "reeman_api_service"
+        exec: "get_reeman_nav_status_server"
+
+    - node:
         pkg: "reeman_nav"
         exec: "logistic_nav_status_server"
     

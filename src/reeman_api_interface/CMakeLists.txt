@@ -18,6 +18,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/GetSpeed.srv"
   "srv/PostCancel.srv"
   "srv/PostNavPoint.srv"
+  "srv/GetNavStatus.srv"
   "msg/ReemanSpeed.msg"
 )
 # uncomment the following section in order to fill in

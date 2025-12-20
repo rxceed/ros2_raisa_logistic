@@ -62,6 +62,7 @@ class pozyxReemanPublisher : public rclcpp::Node
     private:
     rclcpp::Publisher<geometry_msgs::msg::Pose2D>::SharedPtr publisher_;
     rclcpp::Subscription<geometry_msgs::msg::Pose2D>::SharedPtr subscriber_;
+    std::shared_ptr<rclcpp::Node> node_logisticNavStatus = rclcpp::Node::make_shared("logistic_nav_status_pub_client");
     rclcpp::TimerBase::SharedPtr timer_;
     float p_x = 0, p_y = 0, p_theta = 0;
 };

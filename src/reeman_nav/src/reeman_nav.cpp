@@ -6,6 +6,7 @@
 #include "custom_interface/srv/logistic_nav_status.hpp"
 #include "custom_interface/msg/activity_forecast.hpp"
 #include "reeman_api_interface/srv/post_nav_point.hpp"
+#include "reeman_api_interface/srv/get_nav_status.hpp"
 
 #include <memory>
 #include <chrono>
@@ -15,12 +16,6 @@ using namespace std::chrono_literals;
 
 constexpr float GOAL_REACHED_TOL = 0.4f; // meter
 
-typedef struct{
-    float x;
-    float y;
-    float theta;
-} pose;
-
 class navigation : public rclcpp::Node
 {
 public:
@@ -29,187 +24,196 @@ public:
         auto callback_sub_reeman =
             [this](geometry_msgs::msg::Pose2D::UniquePtr msg)->void
         {
-            odom_x = msg->x;
-            odom_y = msg->y;
-            odom_theta = msg->theta;
-
-            check_goal_reached();
+            reeman_x = msg->x;
+            reeman_y = msg->y;
+            reeman_theta = msg->theta;
         };
 
-        auto callback_sub_uwb =
-            [this](geometry_msgs::msg::Pose2D::UniquePtr msg)->void
+        auto callback_check = [this]()->void
         {
-            pozyx_x = msg->x;
-            pozyx_y = msg->y;
-            pozyx_theta = msg->theta;
+            get_navStatus();
         };
 
-        auto callback_sub_dualLeg =
-            [this](custom_interface::msg::DualLeg::UniquePtr msg)->void
+        auto callback_sub_forecast = [this](custom_interface::msg::ActivityForecast::UniquePtr msg)->void
         {
-            right_angle = msg->right_angle;
-            left_angle = msg->left_angle;
-        };
+            int action_index = 0;
 
-        auto callback_sub_forecast =
-            [this](custom_interface::msg::ActivityForecast::UniquePtr msg)->void
-        {
+            action_forecast[0] = msg->t_plus_1;
+            action_forecast[1] = msg->t_plus_2;
+            action_forecast[2] = msg->t_plus_3;
+            action_forecast[3] = msg->t_plus_4;
+
             for(int i = 0; i < 4; i++)
             {
-                forecast_actions[i] = msg->actions[i];
-                forecast_confidences[i] = msg->confidences[i];
+                if(action_forecast[i] != 0 && action_forecast[i] != logisticNavStatus)
+                {
+                    action_index = action_forecast[i];
+                    break;
+                }
+                else
+                {
+                    action_index = logisticNavStatus;
+                }
             }
-            time_to_arrival = msg->time_to_arrival;
-
-            // Jika sedang navigasi → abaikan inference baru
-            if (nav_active)
+            if(action_index == logisticNavStatus)
             {
-                RCLCPP_INFO(get_logger(),
-                    "Navigation active (state %d). Ignoring new inference.",
-                    active_state);
                 return;
             }
-
-            int requested_state = forecast_actions[0]; // t+1
-
-            if (requested_state == 0)
+            if(navStatus_res == 3 && navStatus_code == 0)
             {
-                RCLCPP_INFO(get_logger(),
-                    "State 0 received. Robot hold.");
-                return;
-            }
-
-            char logisticNavStatus = 0;
-            auto req_status =
-                std::make_shared<custom_interface::srv::LogisticNavStatus::Request>();
-            req_status->set__action(0);
-            req_status->set__state(1);
-
-            auto res_status =
-                client_logisticNavStatus->async_send_request(req_status);
-
-            if (rclcpp::spin_until_future_complete(
-                    node_logisticNavStatus, res_status) !=
-                rclcpp::FutureReturnCode::SUCCESS)
-            {
-                RCLCPP_ERROR(get_logger(),
-                    "Failed to call logistic_nav_status");
-                return;
-            }
-
-            logisticNavStatus = res_status.get()->status;
-
-            pose target = goal_map[requested_state];
-
-            float dist = std::sqrt(
-                (odom_x - target.x)*(odom_x - target.x) +
-                (odom_y - target.y)*(odom_y - target.y)
-            );
-
-            if (time_to_arrival < 12.0 * dist && logisticNavStatus == 0)
-            {
-                post_nav(target);
-                nav_active = true;
-                active_state = requested_state;
-                active_goal = target;
-
-                RCLCPP_INFO(get_logger(),
-                    "Navigation LOCKED to state %d", active_state);
+                logisticNavStatus_req(1, action_index);
+                post_nav(action_index);
             }
         };
-
-        subscriber_dualLeg =
-            create_subscription<custom_interface::msg::DualLeg>(
-                "dual_leg", 10, callback_sub_dualLeg);
-
-        subscriber_uwb =
-            create_subscription<geometry_msgs::msg::Pose2D>(
-                "uwb_pose2d", 10, callback_sub_uwb);
-
         subscriber_forecast =
             create_subscription<custom_interface::msg::ActivityForecast>(
-                "activity_forecast", 10, callback_sub_forecast);
+                "action_forecast", 10, callback_sub_forecast);
 
         subscriber_reeman =
             create_subscription<geometry_msgs::msg::Pose2D>(
                 "reeman_pose2d", 10, callback_sub_reeman);
+        
+        timer_ = create_wall_timer(300ms, callback_check);
     }
 
-    void check_goal_reached()
+    void logisticNavStatus_req(char action, char state)
     {
-        if (!nav_active)
-            return;
+        auto req_logisticNavStatus = std::make_shared<custom_interface::srv::LogisticNavStatus::Request>();
 
-        float dist = std::sqrt(
-            (odom_x - active_goal.x)*(odom_x - active_goal.x) +
-            (odom_y - active_goal.y)*(odom_y - active_goal.y)
-        );
-
-        if (dist < GOAL_REACHED_TOL)
+        req_logisticNavStatus->set__action(action);
+        req_logisticNavStatus->set__state(state);
+        while (!client_logisticNavStatus->wait_for_service(100ms))
         {
-            nav_active = false;
-            active_state = -1;
-
-            RCLCPP_INFO(get_logger(),
-                "Goal reached. Navigation UNLOCKED.");
+            if (!rclcpp::ok()) 
+            {
+                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for the logistic_nav_status service. Exiting.");
+                return;
+            }
+            RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "service logistic_nav_status not available, waiting again...");
+        }
+        auto res_logisticNavStatus = client_logisticNavStatus->async_send_request(req_logisticNavStatus);
+        if(rclcpp::spin_until_future_complete(node_logisticNavStatus, res_logisticNavStatus) == rclcpp::FutureReturnCode::SUCCESS)
+        {
+            auto getRes_logisticNavStatus = res_logisticNavStatus.get();
+            logisticNavStatus = getRes_logisticNavStatus->status;
+        }
+        else 
+        {
+            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service logistic_nav_status");
         }
     }
 
-    void post_nav(const pose& target)
+    void get_navStatus()
     {
+        auto node_getNavStatus = rclcpp::Node::make_shared("get_reeman_nav_status_nav_client");
+        auto client_getNavStatus = node_getNavStatus->create_client<reeman_api_interface::srv::GetNavStatus>("get_reeman_nav_status");
+        auto req = std::make_shared<reeman_api_interface::srv::GetNavStatus::Request>();
+        while (!client_getNavStatus->wait_for_service(100ms))
+        {
+            if (!rclcpp::ok()) 
+            {
+                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for the get_reeman_nav_status service. Exiting.");
+                return;
+            }
+            RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "get_reeman_nav_status service not available, waiting again...");
+        }
+
+        auto res_navStatus = client_getNavStatus->async_send_request(req);
+        if(rclcpp::spin_until_future_complete(node_getNavStatus, res_navStatus) == rclcpp::FutureReturnCode::SUCCESS)
+        {
+            auto getRes = res_navStatus.get();
+            navStatus_res = getRes->res;
+            navStatus_code = getRes->code;
+        } 
+        else 
+        {
+            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service get_reeman_nav_status");
+        }
+    }
+
+    void post_nav(int nav_point)
+    {
+        std::string point;
+        switch(nav_point)
+        {
+        case 0:
+            point = "origin";
+            break;
+        case 1:
+            point = "workbench_1";
+            break;
+        case 2:
+            point = "prod_1";
+            break;
+        case 3:
+            point = "workbench_2";
+            break;
+        case 4:
+            point = "prod_2";
+            break;
+        case 5:
+            point = "workbench_2";
+            break;
+        case 6:
+            point = "origin";
+            break;
+        default:
+            point = "origin";
+            break;
+        }
         auto node_post =
-            rclcpp::Node::make_shared("post_reeman_nav_client");
+            rclcpp::Node::make_shared("post_reeman_nav_point_nav_client");
         auto client_post =
             node_post->create_client<
-                reeman_api_interface::srv::PostNav>("post_reeman_nav");
-
+                reeman_api_interface::srv::PostNavPoint>("post_reeman_nav_point");
         auto req_nav =
             std::make_shared<
-                reeman_api_interface::srv::PostNav::Request>();
-
-        req_nav->set__x(target.x);
-        req_nav->set__y(target.y);
-        req_nav->set__theta(target.theta);
-
-        client_post->async_send_request(req_nav);
+                reeman_api_interface::srv::PostNavPoint::Request>();
+        while (!client_post->wait_for_service(100ms))
+        {
+            if (!rclcpp::ok()) 
+            {
+                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for the post_reeman_nav_point service. Exiting.");
+                return;
+            }
+            RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "post_reeman_nav_point service not available, waiting again...");
+        }
+        
+        req_nav->set__point(point);
+        auto res_nav = client_post->async_send_request(req_nav);
+        if(rclcpp::spin_until_future_complete(node_post, res_nav) == rclcpp::FutureReturnCode::SUCCESS)
+        {
+            auto getRes_nav = res_nav.get();
+            std::string status = getRes_nav->status;
+            RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "status: %s\n", status);
+        } 
+        else 
+        {
+            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service logistic_nav_status");
+        }
     }
 
 private:
-    rclcpp::Subscription<custom_interface::msg::DualLeg>::SharedPtr subscriber_dualLeg;
-    rclcpp::Subscription<geometry_msgs::msg::Pose2D>::SharedPtr subscriber_uwb;
     rclcpp::Subscription<geometry_msgs::msg::Pose2D>::SharedPtr subscriber_reeman;
     rclcpp::Subscription<custom_interface::msg::ActivityForecast>::SharedPtr subscriber_forecast;
+    rclcpp::TimerBase::SharedPtr timer_;
 
-    std::shared_ptr<rclcpp::Node> node_logisticNavStatus =
-        rclcpp::Node::make_shared("logistic_nav_status_client");
+    std::shared_ptr<rclcpp::Node> node_logisticNavStatus = rclcpp::Node::make_shared("logistic_nav_status_client");
+    std::shared_ptr<rclcpp::Node> node_navStatus = rclcpp::Node::make_shared("nav_status_nav_client");
 
-    rclcpp::Client<custom_interface::srv::LogisticNavStatus>::SharedPtr
-        client_logisticNavStatus =
-            node_logisticNavStatus->create_client<
-                custom_interface::srv::LogisticNavStatus>(
-                    "logistic_nav_status");
+    rclcpp::Client<reeman_api_interface::srv::GetNavStatus>::SharedPtr client_navStatus = node_navStatus->
+    create_client<reeman_api_interface::srv::GetNavStatus>("get_reeman_nav_status");
+    rclcpp::Client<custom_interface::srv::LogisticNavStatus>::SharedPtr client_logisticNavStatus = node_logisticNavStatus->
+    create_client<custom_interface::srv::LogisticNavStatus>("logistic_nav_status");
 
-    float right_angle = 0.0, left_angle = 0.0;
-    float pozyx_x = 0.0, pozyx_y = 0.0, pozyx_theta = 0.0;
-    float odom_x = 0.0, odom_y = 0.0, odom_theta = 0.0;
-
-    int forecast_actions[4];
-    float forecast_confidences[4];
-    float time_to_arrival = 0.0;
-
-    bool nav_active = false;
-    int active_state = -1;
-    pose active_goal;
-
-    pose goal_map[7] = {
-        {0.0,  0.0,  0.0},
-        {3.51, 3.01, 1.57},
-        {3.28,-5.07, 1.57},
-        {7.64, 2.76, 1.76},
-        {6.13,-4.79, 1.57},
-        {7.64, 2.76, 1.76},
-        {0.0,  0.0,  0.0}
-    };
+    float reeman_x = 0;
+    float reeman_y = 0;
+    float reeman_theta = 0;
+    char logisticNavStatus = 0;
+    int action_forecast[4];
+    
+    int navStatus_res = 6;
+    int navStatus_code = 0;
 };
 
 int main(int argc, char** argv)
