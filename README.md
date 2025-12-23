@@ -3,6 +3,8 @@
 ## Dependencies
 - ROS2 Jazzy
 - Tensorflow C API
+Additional notes:
+reeman_api_service package depends on nlohmann/json library and libCURL. Try installing both library (if not installed yet) if build problems arise because of reeman_api_service
 
 ## Installation
 - Clone this repository
