@@ -15,6 +15,10 @@ git clone https://github.com/rxceed/ros2_raisa_logistic.git
 ```bash
 cd ./ros2_raisa_logistic
 ```
+- Source ROS2 Jazzy environment
+```bash
+source /opt/ros/jazzy/setup.bash
+```
 - Install ROS2 dependencies using rosdep
 ```bash
 rosdep install --from-paths src --ignore-src -r -y
@@ -49,9 +53,9 @@ bash 1-run_services.bash
 #Run second script
 bash 2-run_publishers.bash
 #Run third script
-bash 3-run_navigations
+bash 3-run_navigations.bash
 ```
-Do note that the run scripts ***must be*** ran in that order, or else the required services or topics may not be available nor published.
-
+Do note that the run scripts ***must be*** ran in that order, or else the required services or topics may not be available nor published.<br>
+All run bash scripts already inlcudes sourcing ROS2 Jazzy environment in it's script, so it should be safe to use even if the environment hasn't been sourced before.
 
 
