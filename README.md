@@ -23,7 +23,7 @@ source /opt/ros/jazzy/setup.bash
 ```bash
 rosdep install --from-paths src --ignore-src -r -y
 ```
-- Install Tensorflow C API
+- Install Tensorflow C API <br>
 Tensorflow C for Linux can be downloaded from Tensorflow's official site: https://www.tensorflow.org/install/lang_c. After downloading, extract the **include** and **bin** folder inside **tensorflow** folder inside **activity_pattern_recognition** package.
 ```bash
 |-- ros2_raisa_logistic
@@ -39,6 +39,10 @@ Tensorflow C for Linux can be downloaded from Tensorflow's official site: https:
 |   |   |   |-- LICENSE
 |   |   |   |-- package.xml
 ```
+- Change the API host in secret.hpp inside reeman_api_service package <br>
+The header file is located in *ros2_raisa_logistic/src/reeman_api_service/inlcude/reeman_api_service/secret.hpp*<br>
+Change the host in the address string into the IP address of the Reeman ROS API host. Example: The address of POST_NAV_URL is originally (after repository cloning) "http://host/cmd/nav", if the IP address of the ROS API
+is 10.7.101.100, then change it to "http://10.7.101.100/cmd/nav"
 - Build the packages using the build script
 ```bash
 bash build.sh
