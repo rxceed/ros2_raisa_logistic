@@ -7,23 +7,23 @@
 reeman_api_service package depends on nlohmann/json library and libCURL. Try installing both library (if not installed yet) if build problems arise because of reeman_api_service
 
 ## Installation
-- Clone this repository
+1. Clone this repository
 ```bash
 git clone https://github.com/rxceed/ros2_raisa_logistic.git
 ```
-- Go to the root directory of the workspace
+2. Go to the root directory of the workspace
 ```bash
 cd ./ros2_raisa_logistic
 ```
-- Source ROS2 Jazzy environment
+3. Source ROS2 Jazzy environment
 ```bash
 source /opt/ros/jazzy/setup.bash
 ```
-- Install ROS2 dependencies using rosdep
+4. Install ROS2 dependencies using rosdep
 ```bash
 rosdep install --from-paths src --ignore-src -r -y
 ```
-- Install Tensorflow C API <br>
+5. Install Tensorflow C API <br>
 Tensorflow C for Linux can be downloaded from Tensorflow's official site: https://www.tensorflow.org/install/lang_c. After downloading, extract the **include** and **bin** folder inside **tensorflow** folder inside **activity_pattern_recognition** package.
 ```bash
 |-- ros2_raisa_logistic
@@ -39,18 +39,17 @@ Tensorflow C for Linux can be downloaded from Tensorflow's official site: https:
 |   |   |   |-- LICENSE
 |   |   |   |-- package.xml
 ```
-- Change the API host in secret.hpp inside reeman_api_service package <br>
+6. Change the API host in secret.hpp inside reeman_api_service package <br>
 The header file is located in *ros2_raisa_logistic/src/reeman_api_service/inlcude/reeman_api_service/secret.hpp*<br>
 Change the host in the address string into the IP address of the Reeman ROS API host. Example: The address of POST_NAV_URL is originally (after repository cloning) "http://host/cmd/nav", if the IP address of the ROS API
 is 10.7.101.100, then change it to "http://10.7.101.100/cmd/nav"
-- Build the packages using the build script
+7. Build the packages using the build script
 ```bash
 bash build.sh
 ```
-
 ## Running the program
-- Go to the workspace root directory
-- Run the launch scripts in the following order:
+1. Go to the workspace root directory
+2. Run the launch scripts in the following order:
 ```bash
 # Run first script
 bash 1-run_services.bash
