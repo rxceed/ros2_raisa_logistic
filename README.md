@@ -61,4 +61,7 @@ bash 3-run_navigations.bash
 Do note that the run scripts ***must be*** ran in that order, or else the required services or topics may not be available nor published.<br>
 All run bash scripts already inlcudes sourcing ROS2 Jazzy environment in it's script, so it should be safe to use even if the environment hasn't been sourced before.
 
-
+## Architecture Diagram
+![Architecture Diagram](/architecture_diagram/Architecture%20diagram.png)
+## Data Flow Diagram
+![Data Flow Diagram](/data_flow_diagram/Data%20flow%20diagram.png)
