@@ -1,0 +1,154 @@
+rosbag2_bagfile_information:
+  version: 9
+  storage_identifier: mcap
+  duration:
+    nanoseconds: 274197092230
+  starting_time:
+    nanoseconds_since_epoch: 1766229161524440711
+  message_count: 3972
+  topics_with_message_count:
+    - topic_metadata:
+        name: /uwb_pose2d
+        type: geometry_msgs/msg/Pose2D
+        serialization_format: cdr
+        offered_qos_profiles:
+          - history: unknown
+            depth: 0
+            reliability: reliable
+            durability: volatile
+            deadline:
+              sec: 9223372036
+              nsec: 854775807
+            lifespan:
+              sec: 9223372036
+              nsec: 854775807
+            liveliness: automatic
+            liveliness_lease_duration:
+              sec: 9223372036
+              nsec: 854775807
+            avoid_ros_namespace_conventions: false
+        type_description_hash: RIHS01_d68efa5b46e70f7b16ca23085474fdac5a44b638783ec42f661da64da4724ccc
+      message_count: 686
+    - topic_metadata:
+        name: /dual_leg
+        type: custom_interface/msg/DualLeg
+        serialization_format: cdr
+        offered_qos_profiles:
+          - history: unknown
+            depth: 0
+            reliability: reliable
+            durability: volatile
+            deadline:
+              sec: 9223372036
+              nsec: 854775807
+            lifespan:
+              sec: 9223372036
+              nsec: 854775807
+            liveliness: automatic
+            liveliness_lease_duration:
+              sec: 9223372036
+              nsec: 854775807
+            avoid_ros_namespace_conventions: false
+        type_description_hash: RIHS01_886324f6734415b1aefbd29cf7d0f81be82c6c24068777991c222338d246d858
+      message_count: 914
+    - topic_metadata:
+        name: /reeman_speed
+        type: reeman_api_interface/msg/ReemanSpeed
+        serialization_format: cdr
+        offered_qos_profiles:
+          - history: unknown
+            depth: 0
+            reliability: reliable
+            durability: volatile
+            deadline:
+              sec: 9223372036
+              nsec: 854775807
+            lifespan:
+              sec: 9223372036
+              nsec: 854775807
+            liveliness: automatic
+            liveliness_lease_duration:
+              sec: 9223372036
+              nsec: 854775807
+            avoid_ros_namespace_conventions: false
+        type_description_hash: RIHS01_427969dea158e91316c9685c06ce4fcafb78cab08c34834da49684feb640f70e
+      message_count: 912
+    - topic_metadata:
+        name: /reeman_pose2d
+        type: geometry_msgs/msg/Pose2D
+        serialization_format: cdr
+        offered_qos_profiles:
+          - history: unknown
+            depth: 0
+            reliability: reliable
+            durability: volatile
+            deadline:
+              sec: 9223372036
+              nsec: 854775807
+            lifespan:
+              sec: 9223372036
+              nsec: 854775807
+            liveliness: automatic
+            liveliness_lease_duration:
+              sec: 9223372036
+              nsec: 854775807
+            avoid_ros_namespace_conventions: false
+        type_description_hash: RIHS01_d68efa5b46e70f7b16ca23085474fdac5a44b638783ec42f661da64da4724ccc
+      message_count: 912
+    - topic_metadata:
+        name: /action_forecast
+        type: custom_interface/msg/ActivityForecast
+        serialization_format: cdr
+        offered_qos_profiles:
+          - history: unknown
+            depth: 0
+            reliability: reliable
+            durability: volatile
+            deadline:
+              sec: 9223372036
+              nsec: 854775807
+            lifespan:
+              sec: 9223372036
+              nsec: 854775807
+            liveliness: automatic
+            liveliness_lease_duration:
+              sec: 9223372036
+              nsec: 854775807
+            avoid_ros_namespace_conventions: false
+        type_description_hash: RIHS01_a8e8309783880f2d980dbbd93b1741896eb8cc9eef29dbcc41ccebe93066bcf5
+      message_count: 274
+    - topic_metadata:
+        name: /logistic_nav_status
+        type: std_msgs/msg/Char
+        serialization_format: cdr
+        offered_qos_profiles:
+          - history: unknown
+            depth: 0
+            reliability: reliable
+            durability: volatile
+            deadline:
+              sec: 9223372036
+              nsec: 854775807
+            lifespan:
+              sec: 9223372036
+              nsec: 854775807
+            liveliness: automatic
+            liveliness_lease_duration:
+              sec: 9223372036
+              nsec: 854775807
+            avoid_ros_namespace_conventions: false
+        type_description_hash: RIHS01_3ad2d04dd29ba19d04b16659afa3ccaedd691914b02a64e82e252f2fa6a586a9
+      message_count: 274
+  compression_format: ""
+  compression_mode: ""
+  relative_file_paths:
+    - rosbag2_2025_12_20-18_12_39_0.mcap
+  files:
+    - path: rosbag2_2025_12_20-18_12_39_0.mcap
+      starting_time:
+        nanoseconds_since_epoch: 1766229161524440711
+      duration:
+        nanoseconds: 274197092230
+      message_count: 3972
+  custom_data: ~
+  ros_distro: jazzy
